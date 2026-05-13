@@ -1,30 +1,49 @@
-from flask import Flask, jsonify, request
-from flask_cors import CORS
+# backend/app.py
+from flask import Flask
+from sqlalchemy import text
+from config import Config
+from extensions import db, cors, limiter
 
 
-def create_app():
+def create_app(config=None):
     app = Flask(__name__)
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    app.config.from_object(Config)
+    if config:
+        app.config.update(config)
 
-    @app.get("/api/health")
-    def health_check():
-        return jsonify(status="ok", service="off-dashboard-api")
+    db.init_app(app)
+    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+    limiter.init_app(app)
 
-    @app.get("/api/products/search")
-    def search_products():
-        query = request.args.get("q", "").strip()
-        page = max(int(request.args.get("page", 1)), 1)
-        return jsonify(query=query, page=page, total=0, items=[])
+    from blueprints.health import health_bp
+    from blueprints.products import products_bp
+    app.register_blueprint(health_bp)
+    app.register_blueprint(products_bp)
 
-    @app.get("/api/products/<barcode>")
-    def get_product(barcode):
-        return jsonify(barcode=barcode, found=False, product=None)
+    from commands import register_commands
+    register_commands(app)
+
+    with app.app_context():
+        db.create_all()
+        try:
+            _ensure_fts_index()
+        except Exception:
+            pass
 
     return app
 
 
-app = create_app()
+def _ensure_fts_index():
+    with db.engine.connect() as conn:
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_products_fts ON products "
+            "USING gin(to_tsvector('english', "
+            "coalesce(product_name,'') || ' ' || coalesce(brands,'')))"
+        ))
+        conn.commit()
 
+
+app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
