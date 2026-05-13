@@ -9,8 +9,19 @@ products_bp = Blueprint("products", __name__)
 @products_bp.get("/api/products/search")
 def search_products():
     q = request.args.get("q", "").strip()
-    page = max(int(request.args.get("page", 1)), 1)
-    page_size = min(int(request.args.get("page_size", 20)), 100)
+
+    # Safe int parsing for pagination parameters with fallback to defaults
+    try:
+        page = max(int(request.args.get("page", 1)), 1)
+    except (ValueError, TypeError):
+        page = 1
+
+    try:
+        page_size = min(int(request.args.get("page_size", 20)), 100)
+    except (ValueError, TypeError):
+        page_size = 20
+
+    # DB stores grades in lowercase; normalize user input for case-insensitive matching
     grade = request.args.get("grade", "").strip().lower()
     category = request.args.get("category", "").strip()
     country = request.args.get("country", "").strip()
