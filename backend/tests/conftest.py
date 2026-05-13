@@ -6,7 +6,7 @@ from extensions import db as _db
 TEST_CONFIG = {
     "TESTING": True,
     "SQLALCHEMY_DATABASE_URI": os.environ.get(
-        "TEST_DATABASE_URL", "postgresql://localhost/off_dashboard_test"
+        "TEST_DATABASE_URL", "sqlite:///:memory:"
     ),
     "RATELIMIT_ENABLED": False,
 }
