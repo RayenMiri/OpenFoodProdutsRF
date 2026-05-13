@@ -60,3 +60,11 @@ def search_products():
         page_size=page_size,
         items=[p.to_summary() for p in items],
     )
+
+
+@products_bp.get("/api/products/<barcode>")
+def get_product(barcode):
+    product = db.session.get(Product, barcode)
+    if not product:
+        return jsonify(error="Product not found", barcode=barcode), 404
+    return jsonify(product.to_detail())
