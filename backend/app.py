@@ -3,6 +3,7 @@ from flask import Flask
 from sqlalchemy import text
 from config import Config
 from extensions import db, cors, limiter
+from models import Product
 
 
 def create_app(config=None):
