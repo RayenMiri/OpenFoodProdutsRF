@@ -6,7 +6,7 @@ from extensions import db as _db
 TEST_CONFIG = {
     "TESTING": True,
     "SQLALCHEMY_DATABASE_URI": os.environ.get(
-        "TEST_DATABASE_URL", "postgresql://localhost/off_dashboard_test"
+        "DATABASE_URL", "postgresql://localhost/off_dashboard"
     ),
     "RATELIMIT_ENABLED": False,
 }
@@ -18,7 +18,6 @@ def app():
     with application.app_context():
         _db.create_all()
         yield application
-        _db.drop_all()
 
 
 @pytest.fixture
